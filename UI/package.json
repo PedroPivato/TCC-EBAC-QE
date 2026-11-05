@@ -1,0 +1,9 @@
+{
+  "name": "tcc-ebac-ui",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "test": "cypress run",
+    "test:open": "cypress open"
+  }
+}

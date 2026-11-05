@@ -1,0 +1,5 @@
+node_modules
+MOBILE/app/*.aab
+MOBILE/app/*.apks
+MOBILE/app/*.jar
+MOBILE/app/*.keystore

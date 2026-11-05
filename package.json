@@ -1,0 +1,14 @@
+{
+  "name": "tcc-ebac-qe",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "test:api": "npm --prefix ./API test",
+    "test:ui": "npm --prefix ./UI test",
+    "test:mobile": "npm --prefix ./MOBILE test",
+    "test:mobile:cadastro": "npm --prefix ./MOBILE test -- --spec ./tests/specs/cadastro.spec.js",
+    "test:mobile:login": "npm --prefix ./MOBILE test -- --spec ./tests/specs/login.spec.js",
+    "test:mobile:catalogo": "npm --prefix ./MOBILE test -- --spec ./tests/specs/catalogo.spec.js",
+    "test:all": "npm run test:api && npm run test:ui && npm run test:mobile"
+  }
+}
