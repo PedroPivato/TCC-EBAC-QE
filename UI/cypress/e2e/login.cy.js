@@ -1,5 +1,5 @@
 /// <reference types="cypress" />
-import LoginPage from '../pages/loginPage';
+import LoginPage from '../pages/LoginPage';
 
 
 beforeEach(() => {
