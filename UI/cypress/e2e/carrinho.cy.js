@@ -1,5 +1,5 @@
 /// <reference types="cypress" />
-import ProdutoPage from '../pages/produtoPage';
+import ProdutoPage from '../pages/ProdutoPage';
 
 beforeEach(() => {
   cy.visit('http://lojaebac.ebaconline.art.br/');
