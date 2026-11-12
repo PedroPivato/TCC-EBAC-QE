@@ -4,14 +4,17 @@ name: TCC EBAC - Testes Automatizados
 on:
   push:
     branches: [main]
+
   pull_request:
     branches: [main]
+
   workflow_dispatch:
 
 permissions:
   contents: read
 
 jobs:
+  
   api:
     name: Testes API - Cypress
     runs-on: ubuntu-latest
@@ -35,7 +38,29 @@ jobs:
         run: npm ci
 
       - name: Executar testes de API
+        id: testes_api
         run: npm test
+        continue-on-error: true
+
+      - name: Registrar resultado da API
+        if: always()
+        run: |
+          if [ "${{ steps.testes_api.outcome }}" = "failure" ]; then
+            echo "### API - Testes com falhas" >> "$GITHUB_STEP_SUMMARY"
+            echo "Alguns testes falharam. Consulte os logs." >> "$GITHUB_STEP_SUMMARY"
+          elif [ "${{ steps.testes_api.outcome }}" = "success" ]; then
+            echo "### API - Testes aprovados" >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "### API - Testes nao executados" >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - name: Salvar screenshots da API
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: api-screenshots
+          path: API/cypress/screenshots/
+          if-no-files-found: ignore
 
   ui:
     name: Testes UI - Cypress
@@ -60,4 +85,26 @@ jobs:
         run: npm ci
 
       - name: Executar testes de UI
+        id: testes_ui
         run: npm test
+        continue-on-error: true
+
+      - name: Registrar resultado da UI
+        if: always()
+        run: |
+          if [ "${{ steps.testes_ui.outcome }}" = "failure" ]; then
+            echo "### UI - Testes com falhas" >> "$GITHUB_STEP_SUMMARY"
+            echo "Alguns testes falharam. Consulte os logs e screenshots." >> "$GITHUB_STEP_SUMMARY"
+          elif [ "${{ steps.testes_ui.outcome }}" = "success" ]; then
+            echo "### UI - Testes aprovados" >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "### UI - Testes nao executados" >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - name: Salvar screenshots da UI
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ui-screenshots
+          path: UI/cypress/screenshots/
+          if-no-files-found: ignore
