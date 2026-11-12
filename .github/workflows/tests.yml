@@ -14,7 +14,7 @@ permissions:
   contents: read
 
 jobs:
-  
+
   api:
     name: Testes API - Cypress
     runs-on: ubuntu-latest
@@ -108,3 +108,78 @@ jobs:
           name: ui-screenshots
           path: UI/cypress/screenshots/
           if-no-files-found: ignore
+
+  performance:
+    name: Performance - ${{ matrix.teste }}
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      max-parallel: 1
+      matrix:
+        teste:
+          - catalogo
+          - login
+
+    steps:
+      - name: Checkout do repositorio
+        uses: actions/checkout@v6
+
+      - name: Configurar k6
+        uses: grafana/setup-k6-action@v1
+
+      - name: Iniciar InfluxDB e Grafana
+        run: docker compose -f PERFORMANCE/docker-compose.yml up -d
+
+      - name: Aguardar InfluxDB
+        run: |
+          for i in {1..30}; do
+            if curl -fsS http://localhost:8086/ping > /dev/null; then
+              echo "InfluxDB pronto!"
+              exit 0
+            fi
+            sleep 2
+          done
+          echo "InfluxDB nao respondeu"
+          exit 1
+
+      - name: Executar testes de performance
+        id: testes_k6
+        continue-on-error: true
+        run: |
+          mkdir -p performance-results
+
+          k6 run \
+            --out influxdb=http://localhost:8086/k6 \
+            --summary-export "performance-results/${{ matrix.teste }}.json" \
+            "PERFORMANCE/${{ matrix.teste }}.test.js"
+
+      - name: Registrar resultado
+        if: always()
+        run: |
+          if [ "${{ steps.testes_k6.outcome }}" = "failure" ]; then
+            echo "### Performance - ${{ matrix.teste }}" >> "$GITHUB_STEP_SUMMARY"
+            echo "Teste apresentou falhas, erros ou thresholds nao atingidos." >> "$GITHUB_STEP_SUMMARY"
+          elif [ "${{ steps.testes_k6.outcome }}" = "success" ]; then
+            echo "### Performance - ${{ matrix.teste }}" >> "$GITHUB_STEP_SUMMARY"
+            echo "Teste aprovado." >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "### Performance - ${{ matrix.teste }}" >> "$GITHUB_STEP_SUMMARY"
+            echo "Teste nao executado." >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - name: Salvar resultados do k6
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: k6-${{ matrix.teste }}-results
+          path: performance-results/
+          if-no-files-found: ignore
+
+      - name: Exibir logs do Docker
+        if: failure()
+        run: docker compose -f PERFORMANCE/docker-compose.yml logs --tail=100
+
+      - name: Encerrar containers
+        if: always()
+        run: docker compose -f PERFORMANCE/docker-compose.yml down
